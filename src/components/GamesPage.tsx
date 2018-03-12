@@ -3,12 +3,21 @@ import { connect } from 'react-redux';
 import StateType from '../types/StateType';
 import { GamesList } from './GamesList';
 import Game from '../models/Game';
+import { getGames } from '../actions';
 
 export interface GamesPageProps {
     games: Game[];
+    getGames: Function;
 }
 
-export class GamesPage extends React.Component<GamesPageProps, StateType> {
+export interface GamesPageDispatch {
+    getGames: () => (dispatch: Function) => void;
+}
+
+export class GamesPage extends React.Component<GamesPageProps & GamesPageDispatch, StateType> {
+    componentDidMount() {
+        this.props.getGames();
+    }
     render() {
         return(
             <div>
@@ -26,4 +35,4 @@ function mapStateToProps(state: StateType) {
     };
 }
 
-export default connect<GamesPageProps>(mapStateToProps)(GamesPage);
+export default connect(mapStateToProps, { getGames })(GamesPage);
