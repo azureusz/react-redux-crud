@@ -1,5 +1,8 @@
 import * as React from 'react';
 import './App.css';
+import { Link } from 'react-router-dom';
+import { Route } from 'react-router';
+import GamesPage from './components/GamesPage';
 
 const logo = require('./logo.svg');
 
@@ -12,8 +15,10 @@ class App extends React.Component {
           <h1 className="App-title">Welcome to React</h1>
         </header>
         <p className="App-intro">
-          To get started, edasdit <code>src/App.tsx</code> and save to reload.
+            <Link to={'games'}>Games</Link>
         </p>
+
+        <Route path={'/games'} component={GamesPage}/>
       </div>
     );
   }
