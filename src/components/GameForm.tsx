@@ -3,6 +3,7 @@ import { Alert, Button, ControlLabel, FormControl, FormGroup, HelpBlock, Image }
 import { connect } from 'react-redux';
 import { saveGame } from '../actions';
 import Game from '../models/Game';
+import { Redirect } from 'react-router';
 
 export interface GameFormProps {
 
@@ -21,6 +22,7 @@ export interface GameFormState {
         cover: string;
     };
     loading: boolean;
+    done: boolean;
 }
 
 class GameForm extends React.Component<GameFormProps & any, GameFormState> {
@@ -33,7 +35,8 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
             title: '',
             cover: ''
         },
-        loading: false
+        loading: false,
+        done: false
     };
 
     handleChange = (e) => {
@@ -70,11 +73,14 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
             const {title, cover} = this.state;
             this.setState({loading: true});
             this.props.saveGame(new Game(title, cover)).then(
-                () => { /* todo */
+                () => { this.setState({ done: true });
                 },
                 (err) => err.response.json().then(({errors}) => {
 
-                    this.setState({errors: { title: '', cover: '', global: errors.global }, loading: false});
+                    this.setState({
+                        errors: { title: errors.title || '' , cover: errors.cover || '', global: errors.global || '' },
+                        loading: false
+                    });
                 })
             );
 
@@ -82,7 +88,8 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
     }
 
     render() {
-        return (
+
+        const form = (
             <form onSubmit={this.handleSubmit}>
                 <h1>Create new game</h1>
                 {this.state.errors.global !== '' &&
@@ -123,7 +130,7 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
                 </FormGroup>
                 {this.state.cover !== '' &&
                 <FormGroup>
-                    <Image src={this.state.cover} alt="cover" thumbnail={true}/>
+                    <Image src={this.state.cover} alt="cover" thumbnail={true} responsive={true} width="300px"/>
                 </FormGroup>
                 }
                 <FormGroup>
@@ -132,6 +139,12 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
                     </Button>
                 </FormGroup>
             </form>
+        );
+
+        return (
+            <div>
+                { this.state.done ? <Redirect to="/games" /> : form }
+            </div>
         );
     }
 }
