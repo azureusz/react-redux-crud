@@ -3,7 +3,7 @@ import { Route } from 'react-router';
 import GamesPage from './components/GamesPage';
 import { Grid, Nav, NavItem } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
-import { GameForm } from './components/GameForm';
+import GameForm from './components/GameForm';
 
 class App extends React.Component {
     render() {

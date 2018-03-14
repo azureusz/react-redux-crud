@@ -1,42 +1,52 @@
 import * as React from 'react';
-import { Button, ControlLabel, FormControl, FormGroup, HelpBlock, Image } from 'react-bootstrap';
+import { Alert, Button, ControlLabel, FormControl, FormGroup, HelpBlock, Image } from 'react-bootstrap';
 import { connect } from 'react-redux';
+import { saveGame } from '../actions';
+import Game from '../models/Game';
 
 export interface GameFormProps {
 
+}
+
+export interface GameFormDispatch {
+    saveGame: (game: Game) => (dispatch: any) => Promise<any>;
 }
 
 export interface GameFormState {
     title: string;
     cover: string;
     errors: {
+        global?: string;
         title: string;
         cover: string;
     };
+    loading: boolean;
 }
 
-export class GameForm extends React.Component<GameFormProps, GameFormState> {
+class GameForm extends React.Component<GameFormProps & any, GameFormState> {
 
     state = {
         title: '',
         cover: '',
         errors: {
+            global: '',
             title: '',
             cover: ''
-        }
+        },
+        loading: false
     };
 
     handleChange = (e) => {
+        let errors = Object.assign({}, this.state.errors);
+        errors.global = '';
         if (!!this.state.errors[e.target.name]) {
-            let errors = Object.assign({}, this.state.errors);
-            delete errors[e.target.name];
-            this.setState({
-                [e.target.name]: e.target.value,
-                errors
-            });
-        } else {
-            this.setState({ [e.target.name]: e.target.value });
+            errors[e.target.name] = '';
         }
+
+        this.setState({
+            [e.target.name]: e.target.value,
+            errors
+        });
     }
 
     handleSubmit = (e) => {
@@ -44,23 +54,44 @@ export class GameForm extends React.Component<GameFormProps, GameFormState> {
 
         // validation
 
-        let errors = { title: '', cover: ''};
+        let error = {title: '', cover: '', global: ''};
 
         if (this.state.title === '') {
-            errors.title = 'Can\'t be empty!';
+            error.title = 'Can\'t be empty!';
         }
         if (this.state.cover === '') {
-            errors.cover = 'Can\'t be empty!';
+            error.cover = 'Can\'t be empty!';
         }
-        this.setState({ errors });
+        this.setState({errors: error});
+
+        const isValid = Object.keys(error).every((x) => error[x] === '');
+
+        if (isValid) {
+            const {title, cover} = this.state;
+            this.setState({loading: true});
+            this.props.saveGame(new Game(title, cover)).then(
+                () => { /* todo */
+                },
+                (err) => err.response.json().then(({errors}) => {
+
+                    this.setState({errors: { title: '', cover: '', global: errors.global }, loading: false});
+                })
+            );
+
+        }
     }
 
     render() {
         return (
             <form onSubmit={this.handleSubmit}>
                 <h1>Create new game</h1>
+                {this.state.errors.global !== '' &&
+                <Alert bsStyle="danger">
+                    {this.state.errors.global}
+                </Alert>}
                 <FormGroup
                     controlId="formBasicText"
+                    validationState={this.state.errors.title !== '' ? 'error' : null}
                 >
                     <ControlLabel>Title</ControlLabel>
                     <FormControl
@@ -72,10 +103,11 @@ export class GameForm extends React.Component<GameFormProps, GameFormState> {
                         onChange={this.handleChange}
                     />
                     {this.state.errors.title !== '' &&
-                        <HelpBlock> {this.state.errors.title} </HelpBlock>}
+                    <HelpBlock> {this.state.errors.title} </HelpBlock>}
                 </FormGroup>
                 <FormGroup
                     controlId="formBasicText"
+                    validationState={this.state.errors.cover !== '' ? 'error' : null}
                 >
                     <ControlLabel>Cover</ControlLabel>
                     <FormControl
@@ -89,17 +121,19 @@ export class GameForm extends React.Component<GameFormProps, GameFormState> {
                     {this.state.errors.cover !== '' &&
                     <HelpBlock> {this.state.errors.cover} </HelpBlock>}
                 </FormGroup>
-                { this.state.cover !== '' &&
-                    <FormGroup>
-                        <Image src={this.state.cover} alt="cover" thumbnail={true}/>
-                    </FormGroup>
+                {this.state.cover !== '' &&
+                <FormGroup>
+                    <Image src={this.state.cover} alt="cover" thumbnail={true}/>
+                </FormGroup>
                 }
                 <FormGroup>
-                    <Button bsStyle="primary" type="submit">Submit</Button>
+                    <Button bsStyle="primary" disabled={this.state.loading} type="submit">
+                        {this.state.loading ? 'Loading...' : 'Submit'}
+                    </Button>
                 </FormGroup>
             </form>
         );
     }
 }
 
-export default connect()(GameForm);
+export default connect(null, {saveGame})(GameForm);
