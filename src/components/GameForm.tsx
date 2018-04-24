@@ -1,43 +1,57 @@
 import * as React from 'react';
-import { Alert, Button, ControlLabel, FormControl, FormGroup, HelpBlock, Image } from 'react-bootstrap';
 import { connect } from 'react-redux';
-import { saveGame } from '../actions';
+import { fetchGame, saveGame } from '../actions';
 import Game from '../models/Game';
 import { Redirect } from 'react-router';
+import { Form, Image, Button, Message } from 'semantic-ui-react';
+import StateType from '../types/StateType';
 
 export interface GameFormProps {
-
+    match: any;
 }
 
 export interface GameFormDispatch {
-    saveGame: (game: Game) => (dispatch: any) => Promise<any>;
+    saveGame: (game: Game) => (dispatch: Function) => Promise<any>;
+    fetchGame: (_id: string) => (dispatch: Function) => Promise<any>;
 }
 
-export interface GameFormState {
-    title: string;
-    cover: string;
+const initialState = {
+    _id: null,
+    title: '',
+    cover: '',
     errors: {
-        global?: string;
-        title: string;
-        cover: string;
-    };
-    loading: boolean;
-    done: boolean;
-}
+        global: '',
+        title: '',
+        cover: ''
+    },
+    loading: false,
+    done: false
+};
+
+export type GameFormState = typeof initialState;
 
 class GameForm extends React.Component<GameFormProps & any, GameFormState> {
 
     state = {
-        title: '',
-        cover: '',
-        errors: {
-            global: '',
-            title: '',
-            cover: ''
-        },
-        loading: false,
-        done: false
+        ...initialState,
+        title: this.props.game ? this.props.game.title : '',
+        cover: this.props.game ? this.props.game.cover : '',
+        _id: this.props.game ? this.props.game._id : null
     };
+
+    componentWillReceiveProps(nextProps: any) {
+        this.setState({
+            _id: nextProps.game._id,
+            title: nextProps.game.title,
+            cover: nextProps.game.cover
+        });
+    }
+
+    componentDidMount() {
+        if (this.props.match.params._id) {
+            this.props.fetchGame(this.props.match.params._id);
+        }
+    }
 
     handleChange = (e) => {
         let errors = Object.assign({}, this.state.errors);
@@ -90,55 +104,23 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
     render() {
 
         const form = (
-            <form onSubmit={this.handleSubmit}>
+            <Form onSubmit={this.handleSubmit} loading={this.state.loading}>
                 <h1>Create new game</h1>
                 {this.state.errors.global !== '' &&
-                <Alert bsStyle="danger">
-                    {this.state.errors.global}
-                </Alert>}
-                <FormGroup
-                    controlId="formBasicText"
-                    validationState={this.state.errors.title !== '' ? 'error' : null}
-                >
-                    <ControlLabel>Title</ControlLabel>
-                    <FormControl
-                        type="text"
-                        value={this.state.title}
-                        placeholder="Enter title"
-                        name="title"
-                        id="title"
-                        onChange={this.handleChange}
-                    />
-                    {this.state.errors.title !== '' &&
-                    <HelpBlock> {this.state.errors.title} </HelpBlock>}
-                </FormGroup>
-                <FormGroup
-                    controlId="formBasicText"
-                    validationState={this.state.errors.cover !== '' ? 'error' : null}
-                >
-                    <ControlLabel>Cover</ControlLabel>
-                    <FormControl
-                        type="text"
-                        name="cover"
-                        id="cover"
-                        value={this.state.cover}
-                        onChange={this.handleChange}
-                        placeholder="Enter cover"
-                    />
-                    {this.state.errors.cover !== '' &&
-                    <HelpBlock> {this.state.errors.cover} </HelpBlock>}
-                </FormGroup>
-                {this.state.cover !== '' &&
-                <FormGroup>
-                    <Image src={this.state.cover} alt="cover" thumbnail={true} responsive={true} width="300px"/>
-                </FormGroup>
-                }
-                <FormGroup>
-                    <Button bsStyle="primary" disabled={this.state.loading} type="submit">
-                        {this.state.loading ? 'Loading...' : 'Submit'}
-                    </Button>
-                </FormGroup>
-            </form>
+                    <Message color={'red'} negative={true} content={this.state.errors.global}
+                             display={'block !important'}/>}
+                <Form.Input name={'title'} label="Title" placeholder="Title" value={this.state.title}
+                            onChange={this.handleChange} error={this.state.errors.title !== ''}/>
+                {this.state.errors.title !== '' && <label>{this.state.errors.title}</label>}
+                <Form.Input name={'cover'} label="Cover" placeholder="Cover" value={this.state.cover}
+                            onChange={this.handleChange} error={this.state.errors.cover !== ''}/>
+                {this.state.errors.cover !== '' && <label>{this.state.errors.cover}</label>}
+                <Form.Field>
+                    {this.state.cover !== '' &&
+                        <Image size={'small'} bordered={true} alt={'cover'} src={this.state.cover}/>}
+                </Form.Field>
+                <Button primary={true}>Save</Button>
+            </Form>
         );
 
         return (
@@ -149,4 +131,12 @@ class GameForm extends React.Component<GameFormProps & any, GameFormState> {
     }
 }
 
-export default connect(null, {saveGame})(GameForm);
+function mapStateToProps(state: StateType, props: GameFormProps) {
+    if (props.match.params._id) {
+        return {
+            game: state.games.find(item => item._id === props.match.params._id)
+        };
+    }
+    return { game: null };
+}
+export default connect(mapStateToProps, {saveGame, fetchGame})(GameForm);

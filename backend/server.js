@@ -30,6 +30,13 @@ mongodb.MongoClient.connect(dbUrl, function(err,db){
        });
     });
 
+    app.get('/api/games/:_id', (req,res) => {
+
+        dbase.collection('games').findOne({_id: new mongodb.ObjectId(req.params._id)},(err,game) => {
+            res.json({ game });
+        });
+    });
+
     app.post('/api/games', (req,res) => {
         const { errors, isValid } = validate(req.body);
         if(isValid) {
@@ -45,6 +52,7 @@ mongodb.MongoClient.connect(dbUrl, function(err,db){
             res.status(400).json({ errors });
         }
     })
+
     app.use((req, res) => {
         res.status(404).json({
             errors: {

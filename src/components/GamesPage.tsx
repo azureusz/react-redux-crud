@@ -7,11 +7,10 @@ import { getGames } from '../actions';
 
 export interface GamesPageProps {
     games: Game[];
-    getGames: Function;
 }
 
 export interface GamesPageDispatch {
-    getGames: () => (dispatch: Function) => void;
+    getGames: () => (dispatch: Function) => Promise<Game[]>;
 }
 
 export class GamesPage extends React.Component<GamesPageProps & GamesPageDispatch, StateType> {

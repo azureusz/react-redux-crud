@@ -1,5 +1,7 @@
 import * as React from 'react';
 import Game from '../models/Game';
+import { Card } from 'semantic-ui-react';
+import { GameCard } from './GameCard';
 
 export interface GamesListProps {
     games: Game[];
@@ -12,7 +14,9 @@ export const GamesList: React.SFC<GamesListProps> = (props) => {
     );
 
     const gamesList = (
-        <p>games li</p>
+        <Card.Group itemsPerRow={4}>
+            {props.games.map((game, index) => <GameCard game={game} key={game._id}/>)}
+        </Card.Group>
     );
 
     return (
